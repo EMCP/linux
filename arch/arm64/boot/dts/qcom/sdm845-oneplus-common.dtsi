@@ -533,6 +533,7 @@
 
 		syna,reset-delay-ms = <200>;
 		syna,startup-delay-ms = <200>;
+		wakeup-source;
 
 		rmi4-f01@1 {
 			reg = <0x01>;
