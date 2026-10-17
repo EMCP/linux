@@ -57,6 +57,8 @@ properties:
   vdd-supply: true
   vio-supply: true
 
+  wakeup-source: true
+
   rmi4-f01@1:
     type: object
     additionalProperties: false
