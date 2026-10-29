@@ -18,6 +18,7 @@
 #include <linux/err.h>
 #include <linux/io.h>
 #include <linux/irq.h>
+#include <linux/math64.h>
 #include <linux/module.h>
 #include <linux/of.h>
 #include <linux/pagemap.h>
@@ -365,11 +366,13 @@ static long tegra_get_tolerance_rate(struct tegra_uart_port *tup,
 {
 	int i;
 
+	/* 64-bit: rate * tolerance overflows a 32-bit long */
 	for (i = 0; i < tup->n_adjustable_baud_rates; ++i) {
 		if (baud >= tup->baud_tolerance[i].lower_range_baud &&
 		    baud <= tup->baud_tolerance[i].upper_range_baud)
-			return (rate + (rate *
-				tup->baud_tolerance[i].tolerance) / 10000);
+			return rate + div_s64((s64)rate *
+					      tup->baud_tolerance[i].tolerance,
+					      10000);
 	}
 
 	return rate;
@@ -379,8 +382,9 @@ static int tegra_check_rate_in_range(struct tegra_uart_port *tup)
 {
 	long diff;
 
-	diff = ((long)(tup->configured_rate - tup->required_rate) * 10000)
-		/ tup->required_rate;
+	/* 64-bit: delta * 10000 overflows a 32-bit long above ~215 kHz */
+	diff = div_s64((s64)(tup->configured_rate - tup->required_rate) * 10000,
+		       tup->required_rate);
 	if (diff < (tup->cdata->error_tolerance_low_range * 100) ||
 	    diff > (tup->cdata->error_tolerance_high_range * 100)) {
 		dev_err(tup->uport.dev,
