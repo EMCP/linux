@@ -705,10 +705,8 @@ static void retire_submit(struct msm_gpu *gpu, struct msm_ringbuffer *ring,
 	cycles = stats->cpcycles_end - stats->cpcycles_start;
 
 	/* Calculate the clock frequency from the number of CP cycles */
-	if (elapsed) {
-		clock = cycles * 1000;
-		do_div(clock, elapsed);
-	}
+	if (elapsed)
+		clock = div64_u64(cycles * 1000, elapsed);
 
 	submit->queue->ctx->elapsed_ns += elapsed;
 	submit->queue->ctx->cycles     += cycles;
