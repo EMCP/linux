@@ -5,6 +5,7 @@
 #include <dt-bindings/input/input.h>
 #include <dt-bindings/leds/common.h>
 #include <dt-bindings/pinctrl/qcom,pmic-gpio.h>
+#include <dt-bindings/thermal/thermal.h>
 
 / {
 	model = "LG Nexus 5";
@@ -39,6 +40,220 @@
 			gpios = <&pm8941_gpios 3 GPIO_ACTIVE_LOW>;
 			linux,input-type = <1>;
 			linux,code = <KEY_VOLUMEDOWN>;
+		};
+	};
+
+	cpu_opp_table: opp-table-cpu {
+		/*
+		 * Speed bin 1 only (the vendor kernel's 2.3 GHz table for this
+		 * board), voltages per PVS bin from acpu_freq_tbl_2p3g_pvsN, with
+		 * PVS 7 = PVS 6. The plain opp-microvolt is PVS 0, the highest,
+		 * for a fuse version this table does not name. Not opp-shared:
+		 * each Krait core has its own clock. Above 1190.4 MHz the OPPs
+		 * are turbo-mode, so they stay off until boost is enabled.
+		 */
+		compatible = "operating-points-v2-krait-cpu";
+		nvmem-cells = <&cpu_pte>;
+
+		opp-422400000 {
+			opp-hz = /bits/ 64 <422400000>;
+			opp-microvolt = <800000 800000 1100000>;
+			opp-microvolt-speed1-pvs0-v0 = <800000 800000 1100000>;
+			opp-microvolt-speed1-pvs1-v0 = <800000 800000 1100000>;
+			opp-microvolt-speed1-pvs2-v0 = <775000 775000 1100000>;
+			opp-microvolt-speed1-pvs3-v0 = <775000 775000 1100000>;
+			opp-microvolt-speed1-pvs4-v0 = <775000 775000 1100000>;
+			opp-microvolt-speed1-pvs5-v0 = <750000 750000 1100000>;
+			opp-microvolt-speed1-pvs6-v0 = <750000 750000 1100000>;
+			opp-microvolt-speed1-pvs7-v0 = <750000 750000 1100000>;
+			opp-supported-hw = <0x2>;
+			clock-latency-ns = <100000>;
+		};
+
+		opp-652800000 {
+			opp-hz = /bits/ 64 <652800000>;
+			opp-microvolt = <825000 825000 1100000>;
+			opp-microvolt-speed1-pvs0-v0 = <825000 825000 1100000>;
+			opp-microvolt-speed1-pvs1-v0 = <810000 810000 1100000>;
+			opp-microvolt-speed1-pvs2-v0 = <795000 795000 1100000>;
+			opp-microvolt-speed1-pvs3-v0 = <780000 780000 1100000>;
+			opp-microvolt-speed1-pvs4-v0 = <775000 775000 1100000>;
+			opp-microvolt-speed1-pvs5-v0 = <760000 760000 1100000>;
+			opp-microvolt-speed1-pvs6-v0 = <750000 750000 1100000>;
+			opp-microvolt-speed1-pvs7-v0 = <750000 750000 1100000>;
+			opp-supported-hw = <0x2>;
+			clock-latency-ns = <100000>;
+		};
+
+		opp-729600000 {
+			opp-hz = /bits/ 64 <729600000>;
+			opp-microvolt = <835000 835000 1100000>;
+			opp-microvolt-speed1-pvs0-v0 = <835000 835000 1100000>;
+			opp-microvolt-speed1-pvs1-v0 = <820000 820000 1100000>;
+			opp-microvolt-speed1-pvs2-v0 = <805000 805000 1100000>;
+			opp-microvolt-speed1-pvs3-v0 = <790000 790000 1100000>;
+			opp-microvolt-speed1-pvs4-v0 = <780000 780000 1100000>;
+			opp-microvolt-speed1-pvs5-v0 = <770000 770000 1100000>;
+			opp-microvolt-speed1-pvs6-v0 = <760000 760000 1100000>;
+			opp-microvolt-speed1-pvs7-v0 = <760000 760000 1100000>;
+			opp-supported-hw = <0x2>;
+			clock-latency-ns = <100000>;
+		};
+
+		opp-883200000 {
+			opp-hz = /bits/ 64 <883200000>;
+			opp-microvolt = <855000 855000 1100000>;
+			opp-microvolt-speed1-pvs0-v0 = <855000 855000 1100000>;
+			opp-microvolt-speed1-pvs1-v0 = <840000 840000 1100000>;
+			opp-microvolt-speed1-pvs2-v0 = <825000 825000 1100000>;
+			opp-microvolt-speed1-pvs3-v0 = <810000 810000 1100000>;
+			opp-microvolt-speed1-pvs4-v0 = <800000 800000 1100000>;
+			opp-microvolt-speed1-pvs5-v0 = <790000 790000 1100000>;
+			opp-microvolt-speed1-pvs6-v0 = <780000 780000 1100000>;
+			opp-microvolt-speed1-pvs7-v0 = <780000 780000 1100000>;
+			opp-supported-hw = <0x2>;
+			clock-latency-ns = <100000>;
+		};
+
+		opp-960000000 {
+			opp-hz = /bits/ 64 <960000000>;
+			opp-microvolt = <865000 865000 1100000>;
+			opp-microvolt-speed1-pvs0-v0 = <865000 865000 1100000>;
+			opp-microvolt-speed1-pvs1-v0 = <850000 850000 1100000>;
+			opp-microvolt-speed1-pvs2-v0 = <835000 835000 1100000>;
+			opp-microvolt-speed1-pvs3-v0 = <820000 820000 1100000>;
+			opp-microvolt-speed1-pvs4-v0 = <810000 810000 1100000>;
+			opp-microvolt-speed1-pvs5-v0 = <800000 800000 1100000>;
+			opp-microvolt-speed1-pvs6-v0 = <790000 790000 1100000>;
+			opp-microvolt-speed1-pvs7-v0 = <790000 790000 1100000>;
+			opp-supported-hw = <0x2>;
+			clock-latency-ns = <100000>;
+		};
+
+		opp-1036800000 {
+			opp-hz = /bits/ 64 <1036800000>;
+			opp-microvolt = <875000 875000 1100000>;
+			opp-microvolt-speed1-pvs0-v0 = <875000 875000 1100000>;
+			opp-microvolt-speed1-pvs1-v0 = <860000 860000 1100000>;
+			opp-microvolt-speed1-pvs2-v0 = <845000 845000 1100000>;
+			opp-microvolt-speed1-pvs3-v0 = <830000 830000 1100000>;
+			opp-microvolt-speed1-pvs4-v0 = <820000 820000 1100000>;
+			opp-microvolt-speed1-pvs5-v0 = <810000 810000 1100000>;
+			opp-microvolt-speed1-pvs6-v0 = <800000 800000 1100000>;
+			opp-microvolt-speed1-pvs7-v0 = <800000 800000 1100000>;
+			opp-supported-hw = <0x2>;
+			clock-latency-ns = <100000>;
+		};
+
+		opp-1190400000 {
+			opp-hz = /bits/ 64 <1190400000>;
+			opp-microvolt = <900000 900000 1100000>;
+			opp-microvolt-speed1-pvs0-v0 = <900000 900000 1100000>;
+			opp-microvolt-speed1-pvs1-v0 = <885000 885000 1100000>;
+			opp-microvolt-speed1-pvs2-v0 = <865000 865000 1100000>;
+			opp-microvolt-speed1-pvs3-v0 = <850000 850000 1100000>;
+			opp-microvolt-speed1-pvs4-v0 = <840000 840000 1100000>;
+			opp-microvolt-speed1-pvs5-v0 = <830000 830000 1100000>;
+			opp-microvolt-speed1-pvs6-v0 = <820000 820000 1100000>;
+			opp-microvolt-speed1-pvs7-v0 = <820000 820000 1100000>;
+			opp-supported-hw = <0x2>;
+			clock-latency-ns = <100000>;
+		};
+
+		opp-1267200000 {
+			opp-hz = /bits/ 64 <1267200000>;
+			opp-microvolt = <915000 915000 1100000>;
+			opp-microvolt-speed1-pvs0-v0 = <915000 915000 1100000>;
+			opp-microvolt-speed1-pvs1-v0 = <895000 895000 1100000>;
+			opp-microvolt-speed1-pvs2-v0 = <875000 875000 1100000>;
+			opp-microvolt-speed1-pvs3-v0 = <860000 860000 1100000>;
+			opp-microvolt-speed1-pvs4-v0 = <850000 850000 1100000>;
+			opp-microvolt-speed1-pvs5-v0 = <840000 840000 1100000>;
+			opp-microvolt-speed1-pvs6-v0 = <830000 830000 1100000>;
+			opp-microvolt-speed1-pvs7-v0 = <830000 830000 1100000>;
+			opp-supported-hw = <0x2>;
+			clock-latency-ns = <100000>;
+			turbo-mode;
+		};
+
+		opp-1497600000 {
+			opp-hz = /bits/ 64 <1497600000>;
+			opp-microvolt = <950000 950000 1100000>;
+			opp-microvolt-speed1-pvs0-v0 = <950000 950000 1100000>;
+			opp-microvolt-speed1-pvs1-v0 = <930000 930000 1100000>;
+			opp-microvolt-speed1-pvs2-v0 = <910000 910000 1100000>;
+			opp-microvolt-speed1-pvs3-v0 = <895000 895000 1100000>;
+			opp-microvolt-speed1-pvs4-v0 = <880000 880000 1100000>;
+			opp-microvolt-speed1-pvs5-v0 = <870000 870000 1100000>;
+			opp-microvolt-speed1-pvs6-v0 = <860000 860000 1100000>;
+			opp-microvolt-speed1-pvs7-v0 = <860000 860000 1100000>;
+			opp-supported-hw = <0x2>;
+			clock-latency-ns = <100000>;
+			turbo-mode;
+		};
+
+		opp-1574400000 {
+			opp-hz = /bits/ 64 <1574400000>;
+			opp-microvolt = <965000 965000 1100000>;
+			opp-microvolt-speed1-pvs0-v0 = <965000 965000 1100000>;
+			opp-microvolt-speed1-pvs1-v0 = <945000 945000 1100000>;
+			opp-microvolt-speed1-pvs2-v0 = <925000 925000 1100000>;
+			opp-microvolt-speed1-pvs3-v0 = <910000 910000 1100000>;
+			opp-microvolt-speed1-pvs4-v0 = <895000 895000 1100000>;
+			opp-microvolt-speed1-pvs5-v0 = <880000 880000 1100000>;
+			opp-microvolt-speed1-pvs6-v0 = <870000 870000 1100000>;
+			opp-microvolt-speed1-pvs7-v0 = <870000 870000 1100000>;
+			opp-supported-hw = <0x2>;
+			clock-latency-ns = <100000>;
+			turbo-mode;
+		};
+
+		opp-1728000000 {
+			opp-hz = /bits/ 64 <1728000000>;
+			opp-microvolt = <995000 995000 1100000>;
+			opp-microvolt-speed1-pvs0-v0 = <995000 995000 1100000>;
+			opp-microvolt-speed1-pvs1-v0 = <975000 975000 1100000>;
+			opp-microvolt-speed1-pvs2-v0 = <955000 955000 1100000>;
+			opp-microvolt-speed1-pvs3-v0 = <935000 935000 1100000>;
+			opp-microvolt-speed1-pvs4-v0 = <920000 920000 1100000>;
+			opp-microvolt-speed1-pvs5-v0 = <900000 900000 1100000>;
+			opp-microvolt-speed1-pvs6-v0 = <885000 885000 1100000>;
+			opp-microvolt-speed1-pvs7-v0 = <885000 885000 1100000>;
+			opp-supported-hw = <0x2>;
+			clock-latency-ns = <100000>;
+			turbo-mode;
+		};
+
+		opp-1958400000 {
+			opp-hz = /bits/ 64 <1958400000>;
+			opp-microvolt = <1040000 1040000 1100000>;
+			opp-microvolt-speed1-pvs0-v0 = <1040000 1040000 1100000>;
+			opp-microvolt-speed1-pvs1-v0 = <1020000 1020000 1100000>;
+			opp-microvolt-speed1-pvs2-v0 = <995000 995000 1100000>;
+			opp-microvolt-speed1-pvs3-v0 = <970000 970000 1100000>;
+			opp-microvolt-speed1-pvs4-v0 = <950000 950000 1100000>;
+			opp-microvolt-speed1-pvs5-v0 = <930000 930000 1100000>;
+			opp-microvolt-speed1-pvs6-v0 = <915000 915000 1100000>;
+			opp-microvolt-speed1-pvs7-v0 = <915000 915000 1100000>;
+			opp-supported-hw = <0x2>;
+			clock-latency-ns = <100000>;
+			turbo-mode;
+		};
+
+		opp-2265600000 {
+			opp-hz = /bits/ 64 <2265600000>;
+			opp-microvolt = <1100000 1100000 1100000>;
+			opp-microvolt-speed1-pvs0-v0 = <1100000 1100000 1100000>;
+			opp-microvolt-speed1-pvs1-v0 = <1075000 1075000 1100000>;
+			opp-microvolt-speed1-pvs2-v0 = <1050000 1050000 1100000>;
+			opp-microvolt-speed1-pvs3-v0 = <1025000 1025000 1100000>;
+			opp-microvolt-speed1-pvs4-v0 = <1000000 1000000 1100000>;
+			opp-microvolt-speed1-pvs5-v0 = <975000 975000 1100000>;
+			opp-microvolt-speed1-pvs6-v0 = <950000 950000 1100000>;
+			opp-microvolt-speed1-pvs7-v0 = <950000 950000 1100000>;
+			opp-supported-hw = <0x2>;
+			clock-latency-ns = <100000>;
+			turbo-mode;
 		};
 	};
 
@@ -256,6 +471,26 @@
 		device-wakeup-gpios = <&tlmm 62 GPIO_ACTIVE_HIGH>;
 		shutdown-gpios = <&tlmm 41 GPIO_ACTIVE_HIGH>;
 	};
+};
+
+&cpu0 {
+	operating-points-v2 = <&cpu_opp_table>;
+	#cooling-cells = <2>;
+};
+
+&cpu1 {
+	operating-points-v2 = <&cpu_opp_table>;
+	#cooling-cells = <2>;
+};
+
+&cpu2 {
+	operating-points-v2 = <&cpu_opp_table>;
+	#cooling-cells = <2>;
+};
+
+&cpu3 {
+	operating-points-v2 = <&cpu_opp_table>;
+	#cooling-cells = <2>;
 };
 
 &mdss {
@@ -713,4 +948,44 @@
 	v3p3-supply = <&pm8941_l24>;
 
 	qcom,init-seq = /bits/ 8 <0x1 0x64>;
+};
+
+/*
+ * Map each core's 75 C passive trip to that core's own cpufreq policy, so a
+ * hot core is throttled before the 110 C critical trip shuts the board down.
+ */
+&{/thermal-zones/cpu0-thermal} {
+	cooling-maps {
+		map0 {
+			trip = <&cpu_alert0>;
+			cooling-device = <&cpu0 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
+		};
+	};
+};
+
+&{/thermal-zones/cpu1-thermal} {
+	cooling-maps {
+		map0 {
+			trip = <&cpu_alert1>;
+			cooling-device = <&cpu1 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
+		};
+	};
+};
+
+&{/thermal-zones/cpu2-thermal} {
+	cooling-maps {
+		map0 {
+			trip = <&cpu_alert2>;
+			cooling-device = <&cpu2 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
+		};
+	};
+};
+
+&{/thermal-zones/cpu3-thermal} {
+	cooling-maps {
+		map0 {
+			trip = <&cpu_alert3>;
+			cooling-device = <&cpu3 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
+		};
+	};
 };
