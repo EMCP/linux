@@ -80,8 +80,10 @@ patternProperties:
 
       required-opps: true
 
+      turbo-mode: true
+
     patternProperties:
-      '^opp-microvolt-speed[0-9]+-pvs[0-9]+$': true
+      '^opp-microvolt-speed[0-9]+-pvs[0-9]+(-v[0-9]+)?$': true
 
     required:
       - opp-hz
@@ -275,10 +277,10 @@ examples:
 
             opp-384000000 {
                 opp-hz = /bits/ 64 <384000000>;
-                opp-microvolt-speed0-pvs0 = <1000000 950000 1050000>;
-                opp-microvolt-speed0-pvs1 = <925000 878750 971250>;
-                opp-microvolt-speed0-pvs2 = <875000 831250 918750>;
-                opp-microvolt-speed0-pvs3 = <800000 760000 840000>;
+                opp-microvolt-speed0-pvs0-v0 = <1000000 950000 1050000>;
+                opp-microvolt-speed0-pvs1-v0 = <925000 878750 971250>;
+                opp-microvolt-speed0-pvs2-v0 = <875000 831250 918750>;
+                opp-microvolt-speed0-pvs3-v0 = <800000 760000 840000>;
                 opp-supported-hw = <0x7>;
                 clock-latency-ns = <100000>;
             };
