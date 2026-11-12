@@ -19,20 +19,12 @@ properties:
     const: 1
 
   clocks:
-    items:
-      - description: Parent clock phandle for hfpll0
-      - description: Parent clock phandle for hfpll1
-      - description: Parent clock phandle for acpu0_aux
-      - description: Parent clock phandle for acpu1_aux
-      - description: Parent clock phandle for qsb
+    minItems: 5
+    maxItems: 5
 
   clock-names:
-    items:
-      - const: hfpll0
-      - const: hfpll1
-      - const: acpu0_aux
-      - const: acpu1_aux
-      - const: qsb
+    minItems: 5
+    maxItems: 5
 
 required:
   - compatible
@@ -40,4 +32,58 @@ required:
   - clocks
   - clock-names
 
+allOf:
+  - if:
+      properties:
+        compatible:
+          const: qcom,krait-cc-v1
+    then:
+      properties:
+        clocks:
+          items:
+            - description: Parent clock phandle for hfpll0
+            - description: Parent clock phandle for hfpll1
+            - description: Parent clock phandle for acpu0_aux
+            - description: Parent clock phandle for acpu1_aux
+            - description: Parent clock phandle for qsb
+
+        clock-names:
+          items:
+            - const: hfpll0
+            - const: hfpll1
+            - const: acpu0_aux
+            - const: acpu1_aux
+            - const: qsb
+
+  - if:
+      properties:
+        compatible:
+          const: qcom,krait-cc-v2
+    then:
+      properties:
+        clocks:
+          items:
+            - description: HFPLL of CPU0
+            - description: HFPLL of CPU1
+            - description: HFPLL of CPU2
+            - description: HFPLL of CPU3
+            - description: HFPLL of the L2 cache
+
+        clock-names:
+          items:
+            - const: hfpll0
+            - const: hfpll1
+            - const: hfpll2
+            - const: hfpll3
+            - const: hfpll_l2
+
 additionalProperties: false
+
+examples:
+  - |
+    clock-controller {
+        compatible = "qcom,krait-cc-v2";
+        clocks = <&hfpll0>, <&hfpll1>, <&hfpll2>, <&hfpll3>, <&hfpll_l2>;
+        clock-names = "hfpll0", "hfpll1", "hfpll2", "hfpll3", "hfpll_l2";
+        #clock-cells = <1>;
+    };
