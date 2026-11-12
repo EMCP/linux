@@ -11,8 +11,15 @@
 #include <linux/clk.h>
 #include <linux/clk-provider.h>
 #include <linux/slab.h>
+#include <linux/delay.h>
+
+#include <asm/krait-l2-accessors.h>
 
 #include "clk-krait.h"
+
+/* Secondary mux select value of the aux source (QSB is 0) */
+#define SEC_SEL_AUX	2
+#define LPL_SHIFT	8
 
 enum {
 	cpu0_mux = 0,
@@ -139,6 +146,41 @@ err_parent_name:
 	return clk;
 }
 
+/*
+ * Point a secondary mux at the aux source in hardware, before the mux is
+ * registered (so the framework reads the parked value back as its parent).
+ *
+ * While its HFPLL is being reprogrammed, a primary mux is parked on its
+ * secondary mux (safe_sel). The secondary mux of a core or L2 that the boot
+ * firmware left running from its HFPLL was never used, and can still select
+ * QSB. Parking the primary mux there then clocks the core or the L2 from QSB
+ * instead of aux, and the very first rate change of the probe stops it. The
+ * vendor clock driver selects aux on every secondary mux before it touches
+ * any HFPLL, for the same reason.
+ *
+ * Harmless for a mux that is already on aux, and for one whose primary mux
+ * is on the HFPLL (the secondary output is unused until the next park).
+ */
+static void krait_park_sec_mux(u32 offset, bool lpl)
+{
+	u32 mask = 0x3 << 2;
+	u32 val;
+
+	if (lpl)
+		mask |= 0x3 << (2 + LPL_SHIFT);
+
+	val = krait_get_l2_indirect_reg(offset);
+	val &= ~mask;
+	val |= SEC_SEL_AUX << 2;
+	if (lpl)
+		val |= SEC_SEL_AUX << (2 + LPL_SHIFT);
+	krait_set_l2_indirect_reg(offset, val);
+
+	/* Wait for the switch to complete, as __krait_mux_set_sel() does. */
+	mb();
+	udelay(1);
+}
+
 static struct clk_hw *
 krait_add_sec_mux(struct device *dev, int id, const char *s,
 		  unsigned int offset, bool unique_aux)
@@ -193,6 +235,13 @@ krait_add_sec_mux(struct device *dev, int id, const char *s,
 	} else {
 		sec_mux_list[1].name = "apu_aux";
 	}
+
+	/*
+	 * apq/ipq8064 keep their errata path (SECCLKAGD around every
+	 * secondary switch, see clk-krait.c) and are left as they were.
+	 */
+	if (!mux->disable_sec_src_gating)
+		krait_park_sec_mux(offset, mux->lpl);
 
 	ret = devm_clk_hw_register(dev, &mux->hw);
 	if (ret) {
