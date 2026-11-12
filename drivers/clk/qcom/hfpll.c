@@ -32,6 +32,34 @@ static const struct hfpll_data qcs404 = {
 	.max_rate = 2900000000UL,
 };
 
+/*
+ * Krait 400 CPU and L2 PLLs. Same register layout and VCO split as qcs404,
+ * but a different CONFIG value: 0x04d0405d is what the vendor clock driver
+ * programs and what the boot firmware leaves in the PLLs it starts. The rate
+ * limits are the lowest and highest L values the vendor frequency tables use
+ * (30 and 118, on the 19.2 MHz XO). The initial L, 50 (960 MHz), is what the
+ * firmware leaves in the CPU0 PLL; the PLLs it leaves off hold 0, which
+ * cannot lock when krait-cc first enables them.
+ */
+static const struct hfpll_data msm8974 = {
+	.mode_reg = 0x00,
+	.l_reg = 0x04,
+	.m_reg = 0x08,
+	.n_reg = 0x0c,
+	.user_reg = 0x10,
+	.config_reg = 0x14,
+	.config_val = 0x4d0405d,
+	.status_reg = 0x1c,
+	.lock_bit = 16,
+
+	.l_val = 0x32,
+	.user_val = 0x8,
+	.user_vco_mask = 0x100000,
+	.low_vco_max_rate = 1248000000,
+	.min_rate = 576000000UL,
+	.max_rate = 2265600000UL,
+};
+
 static const struct hfpll_data msm8976_a53 = {
 	.mode_reg = 0x00,
 	.l_reg = 0x04,
@@ -84,6 +112,7 @@ static const struct hfpll_data msm8976_cci = {
 };
 
 static const struct of_device_id qcom_hfpll_match_table[] = {
+	{ .compatible = "qcom,msm8974-hfpll", .data = &msm8974 },
 	{ .compatible = "qcom,msm8976-hfpll-a53", .data = &msm8976_a53 },
 	{ .compatible = "qcom,msm8976-hfpll-a72", .data = &msm8976_a72 },
 	{ .compatible = "qcom,msm8976-hfpll-cci", .data = &msm8976_cci },
