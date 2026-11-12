@@ -77,6 +77,11 @@ struct spm_reg_data {
 	struct linear_range *range;
 	unsigned int ramp_delay;
 	unsigned int init_uV;
+	/*
+	 * The regulator belongs to an L2 SAW shared by all CPUs rather than to
+	 * one CPU's SAW: no CPU is bound, and the writes can run on any CPU.
+	 */
+	bool l2_regulator;
 };
 
 struct spm_driver_data {
@@ -206,6 +211,36 @@ static const struct spm_reg_data spm_reg_8974_8084_cpu  = {
 	.start_index[PM_SLEEP_MODE_SPC] = 3,
 };
 
+/*
+ * The 8974 L2 SAW (SAW2 v2.1) drives the APC rail that all four Krait cores
+ * share: a write to VCTL[7:0] on port 0 is sent to the PMIC regulator (PM8841
+ * S5, leader of the S5-S8 gang), and PMIC_STS[7:0] reports the level once it
+ * has been accepted. The level is the PMIC's own FTSMPS set point, uV / 5000.
+ * Only the voltage registers are described: no SPM sequence is programmed for
+ * the L2 here, so SEQ_ENTRY/SPM_CTL/CFG are left as the firmware set them.
+ */
+static const u16 spm_reg_offset_v2_1_l2[SPM_REG_NR] = {
+	[SPM_REG_PMIC_STS]	= 0x14,
+	[SPM_REG_VCTL]		= 0x1c,
+};
+
+static void smp_set_vdd_v2_1_l2(void *data);
+
+/* Selector == PMIC set point: 70 (350 mV) .. 220 (1100 mV), 5 mV steps */
+static struct linear_range spm_v2_1_l2_regulator_range =
+	REGULATOR_LINEAR_RANGE(350000, 70, 220, 5000);
+
+static const struct spm_reg_data spm_reg_8974_l2 = {
+	.reg_offset = spm_reg_offset_v2_1_l2,
+	.set_vdd = smp_set_vdd_v2_1_l2,
+	.range = &spm_v2_1_l2_regulator_range,
+	/* What the boot firmware leaves on the rail, also the vendor default */
+	.init_uV = 900000,
+	/* PM8841 FTSMPS slew rate used by the vendor krait regulator driver */
+	.ramp_delay = 2395,
+	.l2_regulator = true,
+};
+
 /* SPM register data for 8226 */
 static const struct spm_reg_data spm_reg_8226_cpu  = {
 	.reg_offset = spm_reg_offset_v2_1,
@@ -308,6 +343,12 @@ static int spm_set_voltage_sel(struct regulator_dev *rdev, unsigned int selector
 
 	drv->volt_sel = selector;
 
+	/* A shared L2 SAW is reachable from every CPU */
+	if (drv->reg_data->l2_regulator) {
+		drv->reg_data->set_vdd(drv);
+		return 0;
+	}
+
 	/* Always do the SAW register writes on the corresponding CPU */
 	return smp_call_function_single(drv->reg_cpu, drv->reg_data->set_vdd, drv, true);
 }
@@ -385,6 +426,35 @@ enable_avs:
 	}
 }
 
+#define SPM_2_1_VCTL_VLVL		GENMASK(7, 0)
+#define SPM_2_1_VCTL_PORT		GENMASK(18, 16)
+#define SPM_2_1_PMIC_STS_DATA		GENMASK(7, 0)
+#define SPM_2_1_PMIC_STS_STATE		GENMASK(17, 16)
+
+static void smp_set_vdd_v2_1_l2(void *data)
+{
+	struct spm_driver_data *drv = data;
+	unsigned int vlevel = drv->volt_sel;
+	u32 vctl, sts;
+
+	/*
+	 * Port 0 is the voltage port, and the only one whose writes update
+	 * PMIC_STS. The boot firmware leaves VCTL on another port (it uses
+	 * port 1 for the SMPS phase count), so select port 0 explicitly.
+	 */
+	vctl = spm_register_read(drv, SPM_REG_VCTL);
+	vctl = FIELD_SET(vctl, SPM_2_1_VCTL_PORT, 0);
+	vctl = FIELD_SET(vctl, SPM_2_1_VCTL_VLVL, vlevel);
+	spm_register_write(drv, SPM_REG_VCTL, vctl);
+
+	if (read_poll_timeout_atomic(spm_register_read, sts,
+				     FIELD_GET(SPM_2_1_PMIC_STS_DATA, sts) == vlevel &&
+				     !FIELD_GET(SPM_2_1_PMIC_STS_STATE, sts),
+				     1, 200, false, drv, SPM_REG_PMIC_STS))
+		dev_err_ratelimited(drv->dev, "timeout setting the voltage (%x %x)!\n",
+				    sts, vlevel);
+}
+
 static int spm_get_cpu(struct device *dev)
 {
 	int cpu;
@@ -440,12 +510,14 @@ static int spm_register_regulator(struct device *dev, struct spm_driver_data *dr
 	rdesc->n_voltages = rdesc->linear_ranges[rdesc->n_linear_ranges - 1].max_sel + 1;
 	rdesc->ramp_delay = drv->reg_data->ramp_delay;
 
-	ret = spm_get_cpu(dev);
-	if (ret < 0)
-		return ret;
+	if (!drv->reg_data->l2_regulator) {
+		ret = spm_get_cpu(dev);
+		if (ret < 0)
+			return ret;
 
-	drv->reg_cpu = ret;
-	dev_dbg(dev, "SAW2 bound to CPU %d\n", drv->reg_cpu);
+		drv->reg_cpu = ret;
+		dev_dbg(dev, "SAW2 bound to CPU %d\n", drv->reg_cpu);
+	}
 
 	/*
 	 * Program initial voltage, otherwise registration will also try
@@ -463,7 +535,10 @@ static int spm_register_regulator(struct device *dev, struct spm_driver_data *dr
 	}
 
 	/* Always do the SAW register writes on the corresponding CPU */
-	smp_call_function_single(drv->reg_cpu, drv->reg_data->set_vdd, drv, true);
+	if (drv->reg_data->l2_regulator)
+		drv->reg_data->set_vdd(drv);
+	else
+		smp_call_function_single(drv->reg_cpu, drv->reg_data->set_vdd, drv, true);
 
 	rdev = devm_regulator_register(dev, rdesc, &config);
 	if (IS_ERR(rdev)) {
@@ -489,6 +564,8 @@ static const struct of_device_id spm_match_table[] = {
 	  .data = &spm_reg_8939_cpu },
 	{ .compatible = "qcom,msm8974-saw2-v2.1-cpu",
 	  .data = &spm_reg_8974_8084_cpu },
+	{ .compatible = "qcom,msm8974-saw2-v2.1-l2",
+	  .data = &spm_reg_8974_l2 },
 	{ .compatible = "qcom,msm8976-gold-saw2-v2.3-l2",
 	  .data = &spm_reg_8976_gold_l2 },
 	{ .compatible = "qcom,msm8976-silver-saw2-v2.3-l2",
