@@ -2127,9 +2127,13 @@ tegra_crtc_update_memory_bandwidth(struct drm_crtc *crtc,
 		/*
 		 * When CRTC is disabled on DPMS, the state of attached planes
 		 * is kept unchanged. Hence we need to enforce removal of the
-		 * bandwidths from the ICC paths.
+		 * bandwidths from the ICC paths. A compositor may also detach
+		 * the planes in the same commit (wlroots does), and then they
+		 * are gone from the new state's plane_mask, so walk the planes
+		 * that were attached before it.
 		 */
-		drm_atomic_crtc_for_each_plane(plane, crtc) {
+		drm_for_each_plane_mask(plane, crtc->dev,
+					old_crtc_state->plane_mask) {
 			tegra = to_tegra_plane(plane);
 
 			icc_set_bw(tegra->icc_mem, 0, 0);
