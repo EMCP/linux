@@ -446,6 +446,8 @@ u32 wl1271_tx_enabled_rates_get(struct wl1271 *wl, u32 rate_set,
 	int bit;
 
 	band = wl->hw->wiphy->bands[rate_band];
+	if (!band)
+		return 0;
 	for (bit = 0; bit < band->n_bitrates; bit++) {
 		if (rate_set & 0x1)
 			enabled_rates |= band->bitrates[bit].hw_value;

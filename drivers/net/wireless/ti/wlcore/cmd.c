@@ -1709,6 +1709,8 @@ int wlcore_cmd_regdomain_config_locked(struct wl1271 *wl)
 
 	for (b = NL80211_BAND_2GHZ; b <= NL80211_BAND_5GHZ; b++) {
 		band = wiphy->bands[b];
+		if (!band)
+			continue;
 		for (i = 0; i < band->n_channels; i++) {
 			struct ieee80211_channel *channel = &band->channels[i];
 			u16 ch = channel->hw_value;

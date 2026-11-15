@@ -357,6 +357,12 @@ struct wl1271 {
 
 	bool enable_11a;
 
+	/*
+	 * enable_11a was settled before registration (wl18xx: from the conf)
+	 * rather than by the firmware boot (wl12xx: from the NVS).
+	 */
+	bool enable_11a_from_setup;
+
 	int recovery_count;
 
 	/* Most recently reported noise in dBm */
