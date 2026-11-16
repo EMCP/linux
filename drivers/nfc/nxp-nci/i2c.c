@@ -52,8 +52,11 @@ static int nxp_nci_i2c_set_mode(void *phy_id,
 	gpiod_set_value_cansleep(phy->gpiod_en, (mode != NXP_NCI_MODE_COLD) ? 1 : 0);
 	usleep_range(10000, 15000);
 
-	if (mode == NXP_NCI_MODE_COLD)
-		phy->hard_fault = 0;
+	/*
+	 * Each mode change drives EN/FW and resets the controller, so a fault
+	 * recorded before it no longer applies.
+	 */
+	phy->hard_fault = 0;
 
 	return 0;
 }
@@ -222,8 +225,12 @@ static irqreturn_t nxp_nci_i2c_irq_thread_fn(int irq, void *phy_id)
 		r = nxp_nci_i2c_fw_read(phy, &skb);
 		break;
 	case NXP_NCI_MODE_COLD:
-		r = -EREMOTEIO;
-		break;
+		/*
+		 * The controller is held in reset, so there is nothing to read.
+		 * The interrupt can arrive just after EN drops; it is not a bus
+		 * fault.
+		 */
+		goto exit_irq_handled;
 	}
 
 	if (r == -EREMOTEIO) {
