@@ -4518,6 +4518,16 @@
 				"vfe_lite_cphy_rx",
 				"vfe_lite_src";
 
+			interconnects = <&gladiator_noc MASTER_APPSS_PROC 0
+					 &config_noc SLAVE_CAMERA_CFG 0>,
+					<&mmss_noc MASTER_CAMNOC_HF0 0 &mem_noc SLAVE_EBI1 0>,
+					<&mmss_noc MASTER_CAMNOC_HF1 0 &mem_noc SLAVE_EBI1 0>,
+					<&mmss_noc MASTER_CAMNOC_SF 0 &mem_noc SLAVE_EBI1 0>;
+			interconnect-names = "ahb",
+					     "hf_0",
+					     "hf_1",
+					     "sf_mnoc";
+
 			iommus = <&apps_smmu 0x0808 0x0>,
 				 <&apps_smmu 0x0810 0x8>,
 				 <&apps_smmu 0x0c08 0x0>,
