@@ -120,6 +120,7 @@
 	fuelgauge: max17048@36 {
 		compatible = "maxim,max17048";
 		reg = <0x36>;
+		power-supplies = <&charger>;
 
 		maxim,double-soc;
 		maxim,rcomp = /bits/ 8 <0x4d>;
