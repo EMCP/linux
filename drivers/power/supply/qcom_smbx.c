@@ -381,6 +381,7 @@ struct smb_init_register {
  * @base:		Base address for smb registers
  * @regmap:		Register map
  * @batt_info:		Battery data from DT
+ * @float_voltage_max_uv: Highest float voltage userspace may set, in uV
  * @initial_charge_enable: Charging enable state before hardware setup
  * @status_change_work: Worker to handle plug/unplug events
  * @cable_irq:		USB plugin IRQ
@@ -395,6 +396,7 @@ struct smb_chip {
 	unsigned int base;
 	struct regmap *regmap;
 	struct power_supply_battery_info *batt_info;
+	int float_voltage_max_uv;
 	u8 initial_charge_enable;
 
 	struct delayed_work status_change_work;
@@ -417,6 +419,8 @@ static enum power_supply_property smb_properties[] = {
 	POWER_SUPPLY_PROP_HEALTH,
 	POWER_SUPPLY_PROP_ONLINE,
 	POWER_SUPPLY_PROP_USB_TYPE,
+	POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE,
+	POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE_MAX,
 };
 
 static int smb_get_prop_usb_online(struct smb_chip *chip, int *val)
@@ -653,6 +657,32 @@ static int smb_get_prop_health(struct smb_chip *chip, int *val)
 	return 0;
 }
 
+static int smb_get_float_voltage(struct smb_chip *chip, int *val)
+{
+	unsigned int sel;
+	int rc;
+
+	rc = regmap_read(chip->regmap, chip->base + FLOAT_VOLTAGE_CFG, &sel);
+	if (rc < 0)
+		return rc;
+
+	*val = SMB2_FLOAT_VOLTAGE_MIN_UV +
+	       (sel & FLOAT_VOLTAGE_SETTING_MASK) * SMB2_FLOAT_VOLTAGE_STEP_UV;
+
+	return 0;
+}
+
+static int smb_set_float_voltage(struct smb_chip *chip, int val)
+{
+	unsigned int sel;
+
+	val = clamp(val, SMB2_FLOAT_VOLTAGE_MIN_UV, chip->float_voltage_max_uv);
+	sel = (val - SMB2_FLOAT_VOLTAGE_MIN_UV) / SMB2_FLOAT_VOLTAGE_STEP_UV;
+
+	return regmap_update_bits(chip->regmap, chip->base + FLOAT_VOLTAGE_CFG,
+				  FLOAT_VOLTAGE_SETTING_MASK, sel);
+}
+
 static int smb_get_property(struct power_supply *psy,
 			     enum power_supply_property psp,
 			     union power_supply_propval *val)
@@ -682,6 +712,11 @@ static int smb_get_property(struct power_supply *psy,
 		return smb_get_prop_health(chip, &val->intval);
 	case POWER_SUPPLY_PROP_USB_TYPE:
 		return smb_apsd_get_charger_type(chip, &val->intval);
+	case POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE:
+		return smb_get_float_voltage(chip, &val->intval);
+	case POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE_MAX:
+		val->intval = chip->float_voltage_max_uv;
+		return 0;
 	default:
 		dev_err(chip->dev, "invalid property: %d\n", psp);
 		return -EINVAL;
@@ -700,6 +735,8 @@ static int smb_set_property(struct power_supply *psy,
 					  USBIN_SUSPEND_BIT, !val->intval);
 	case POWER_SUPPLY_PROP_CURRENT_MAX:
 		return smb_set_current_limit(chip, val->intval);
+	case POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE:
+		return smb_set_float_voltage(chip, val->intval);
 	default:
 		dev_err(chip->dev, "No setter for property: %d\n", psp);
 		return -EINVAL;
@@ -712,6 +749,7 @@ static int smb_property_is_writable(struct power_supply *psy,
 	switch (psp) {
 	case POWER_SUPPLY_PROP_STATUS:
 	case POWER_SUPPLY_PROP_CURRENT_MAX:
+	case POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE:
 		return 1;
 	default:
 		return 0;
@@ -1064,6 +1102,15 @@ static int smb_probe(struct platform_device *pdev)
 		return dev_err_probe(chip->dev, rc, "Couldn't set vbat max\n");
 
 skip_float_voltage:
+	/*
+	 * Userspace may lower the float voltage to charge the battery less,
+	 * but not raise it above what is set now: the battery's voltage or,
+	 * without battery data, the boot firmware's setting.
+	 */
+	rc = smb_get_float_voltage(chip, &chip->float_voltage_max_uv);
+	if (rc < 0)
+		return dev_err_probe(chip->dev, rc, "Couldn't read vbat max\n");
+
 	rc = smb_init_irq(chip, &irq, "bat-ov", smb_handle_batt_overvoltage);
 	if (rc < 0)
 		return rc;
