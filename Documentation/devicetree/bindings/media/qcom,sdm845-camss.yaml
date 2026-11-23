@@ -76,6 +76,16 @@ properties:
       - const: vfe1
       - const: vfe_lite
 
+  interconnects:
+    maxItems: 4
+
+  interconnect-names:
+    items:
+      - const: ahb
+      - const: hf_0
+      - const: hf_1
+      - const: sf_mnoc
+
   iommus:
     maxItems: 4
 
@@ -233,6 +243,8 @@ examples:
     #include <dt-bindings/interrupt-controller/arm-gic.h>
     #include <dt-bindings/clock/qcom,camcc-sdm845.h>
     #include <dt-bindings/clock/qcom,gcc-sdm845.h>
+    #include <dt-bindings/interconnect/qcom,icc.h>
+    #include <dt-bindings/interconnect/qcom,sdm845.h>
 
     soc {
       #address-cells = <2>;
@@ -336,6 +348,19 @@ examples:
           "vfe0",
           "vfe1",
           "vfe_lite";
+
+        interconnects = <&gladiator_noc MASTER_APPSS_PROC QCOM_ICC_TAG_ACTIVE_ONLY
+                         &config_noc SLAVE_CAMERA_CFG QCOM_ICC_TAG_ACTIVE_ONLY>,
+                        <&mmss_noc MASTER_CAMNOC_HF0 QCOM_ICC_TAG_ALWAYS
+                         &mem_noc SLAVE_EBI1 QCOM_ICC_TAG_ALWAYS>,
+                        <&mmss_noc MASTER_CAMNOC_HF1 QCOM_ICC_TAG_ALWAYS
+                         &mem_noc SLAVE_EBI1 QCOM_ICC_TAG_ALWAYS>,
+                        <&mmss_noc MASTER_CAMNOC_SF QCOM_ICC_TAG_ALWAYS
+                         &mem_noc SLAVE_EBI1 QCOM_ICC_TAG_ALWAYS>;
+        interconnect-names = "ahb",
+                             "hf_0",
+                             "hf_1",
+                             "sf_mnoc";
 
         iommus = <&apps_smmu 0x0808 0x0>,
           <&apps_smmu 0x0810 0x8>,
