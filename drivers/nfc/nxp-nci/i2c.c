@@ -222,8 +222,11 @@ static irqreturn_t nxp_nci_i2c_irq_thread_fn(int irq, void *phy_id)
 		r = nxp_nci_i2c_fw_read(phy, &skb);
 		break;
 	case NXP_NCI_MODE_COLD:
-		r = -EREMOTEIO;
-		break;
+		/*
+		 * The controller is held in reset and has nothing to send.
+		 * Do not record the interrupt seen as EN drops as a fault.
+		 */
+		goto exit_irq_handled;
 	}
 
 	if (r == -EREMOTEIO) {
