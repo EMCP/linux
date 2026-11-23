@@ -1509,6 +1509,19 @@ static const struct camss_subdev_resources vfe_res_845[] = {
 	}
 };
 
+static const struct resources_icc icc_res_845[] = {
+	{
+		.name = "ahb",
+		.icc_bw_tbl.avg = 38400,
+		.icc_bw_tbl.peak = 76800,
+	},
+	{
+		.name = "hf_0",
+		.icc_bw_tbl.avg = 2097152,
+		.icc_bw_tbl.peak = 2097152,
+	},
+};
+
 static const struct camss_subdev_resources csiphy_res_sm6150[] = {
 	/* CSIPHY0 */
 	{
@@ -5690,6 +5703,8 @@ static const struct camss_resources sdm845_resources = {
 	.csiphy_res = csiphy_res_845,
 	.csid_res = csid_res_845,
 	.vfe_res = vfe_res_845,
+	.icc_res = icc_res_845,
+	.icc_path_num = ARRAY_SIZE(icc_res_845),
 	.csiphy_num = ARRAY_SIZE(csiphy_res_845),
 	.csid_num = ARRAY_SIZE(csid_res_845),
 	.vfe_num = ARRAY_SIZE(vfe_res_845),
