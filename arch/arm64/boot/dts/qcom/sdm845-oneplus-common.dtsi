@@ -531,6 +531,8 @@
 		vdd-supply = <&vreg_l28a_3p0>;
 		vio-supply = <&ts_1p8_supply>;
 
+		wakeup-source;
+
 		syna,reset-delay-ms = <200>;
 		syna,startup-delay-ms = <200>;
 
