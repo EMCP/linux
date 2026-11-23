@@ -50,10 +50,15 @@
 &sound {
 	model = "OnePlus 6T";
 	audio-routing = "RX_BIAS", "MCLK",
+			"AMIC1", "MCLK",
 			"AMIC1", "MIC BIAS3",
+			"AMIC2", "MCLK",
 			"AMIC2", "MIC BIAS2",
+			"AMIC3", "MCLK",
 			"AMIC3", "MIC BIAS4",
+			"AMIC4", "MCLK",
 			"AMIC4", "MIC BIAS1",
+			"AMIC5", "MCLK",
 			"AMIC5", "MIC BIAS3";
 };
 
