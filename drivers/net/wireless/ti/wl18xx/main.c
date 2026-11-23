@@ -2054,6 +2054,7 @@ static int wl18xx_setup(struct wl1271 *wl)
 
 	/* Enable 11a Band only if we have 5G antennas */
 	wl->enable_11a = (priv->conf.phy.number_of_assembled_ant5 != 0);
+	wl->enable_11a_from_setup = true;
 
 	return 0;
 }

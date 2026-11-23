@@ -2439,7 +2439,7 @@ power_off:
 	 * Now we know if 11a is supported (info from the NVS), so disable
 	 * 11a channels if not supported
 	 */
-	if (!wl->enable_11a)
+	if (!wl->enable_11a && wiphy->bands[NL80211_BAND_5GHZ])
 		wiphy->bands[NL80211_BAND_5GHZ]->n_channels = 0;
 
 	wl1271_debug(DEBUG_MAC80211, "11a is %ssupported",
@@ -6307,8 +6307,13 @@ static int wl1271_init_ieee80211(struct wl1271 *wl)
 
 	wl->hw->wiphy->bands[NL80211_BAND_2GHZ] =
 		&wl->bands[NL80211_BAND_2GHZ];
-	wl->hw->wiphy->bands[NL80211_BAND_5GHZ] =
-		&wl->bands[NL80211_BAND_5GHZ];
+	/*
+	 * wl18xx knows at setup whether 5 GHz is usable; wl12xx only learns
+	 * it from the NVS at boot and trims the band in wl12xx_init_fw().
+	 */
+	if (wl->enable_11a || !wl->enable_11a_from_setup)
+		wl->hw->wiphy->bands[NL80211_BAND_5GHZ] =
+			&wl->bands[NL80211_BAND_5GHZ];
 
 	/*
 	 * allow 4 queues per mac address we support +
